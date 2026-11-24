@@ -16,7 +16,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
-#[Fillable(['product_id', 'label', 'color', 'sort_order'])]
+#[Fillable(['product_id', 'label', 'color', 'price', 'net_content', 'bpom_number', 'marketplace_url', 'sort_order'])]
 #[ObservedBy(CatalogCacheObserver::class)]
 class ProductVariant extends Model implements HasMedia
 {
@@ -26,6 +26,13 @@ class ProductVariant extends Model implements HasMedia
 
     /** @var list<string> */
     public array $translatable = ['label'];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'integer',
+        ];
+    }
 
     public function product(): BelongsTo
     {
@@ -62,6 +69,25 @@ class ProductVariant extends Model implements HasMedia
             'color' => $this->color,
             'labelTextureUrl' => media_url($this->getFirstMedia('label_texture'), 'texture'),
             'imageUrl' => media_url($this->getFirstMedia('image'), 'card'),
+        ];
+    }
+
+    /**
+     * Viewer config plus the details shown next to the variant picker.
+     * Empty variant values fall back to the product's own values.
+     *
+     * @return array<string, mixed>
+     */
+    public function pickerData(Product $product): array
+    {
+        $price = $this->price ?? $product->price;
+
+        return [
+            ...$this->viewerConfig(),
+            'price' => $price === null ? null : Product::formatRupiah($price),
+            'netContent' => $this->net_content ?: $product->net_content,
+            'bpomNumber' => $this->bpom_number ?: $product->bpom_number,
+            'marketplaceUrl' => $this->marketplace_url,
         ];
     }
 }

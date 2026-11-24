@@ -14,6 +14,16 @@
                 width="800" height="800" loading="lazy" decoding="async"
             >
         @endif
+        @if ($product->bpom_number || $product->halal_number)
+            <ul class="absolute top-4 left-4 flex gap-1.5 text-[11px] font-semibold tracking-wide uppercase">
+                @if ($product->bpom_number)
+                    <li class="rounded-full bg-paper-raised/90 px-2.5 py-1 backdrop-blur" title="{{ __('site.products.bpom_registered') }}">{{ __('site.products.bpom') }}</li>
+                @endif
+                @if ($product->halal_number)
+                    <li class="rounded-full bg-paper-raised/90 px-2.5 py-1 backdrop-blur" title="{{ __('site.products.halal_certified') }}">{{ __('site.products.halal') }}</li>
+                @endif
+            </ul>
+        @endif
         @if ($product->variants->isNotEmpty())
             <ul class="absolute bottom-4 left-4 flex gap-1.5" aria-label="{{ __('site.products.variants') }}">
                 @foreach ($product->variants->take(5) as $variant)
@@ -31,8 +41,13 @@
             </a>
         </h3>
         <p class="line-clamp-2 text-sm text-ink-muted">{{ $product->short_description }}</p>
-        @if ($product->formattedPrice())
-            <p class="mt-auto pt-3 text-sm font-semibold">{{ $product->formattedPrice() }}</p>
+        @if ($price = $product->formattedPriceRange())
+            <p class="mt-auto pt-3 text-sm font-semibold">
+                {{ $price }}
+                @if ($product->net_content)
+                    <span class="font-normal text-ink-muted">· {{ $product->net_content }}</span>
+                @endif
+            </p>
         @endif
     </div>
 </article>

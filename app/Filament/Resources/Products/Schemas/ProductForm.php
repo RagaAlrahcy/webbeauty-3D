@@ -7,10 +7,14 @@ namespace App\Filament\Resources\Products\Schemas;
 use App\Enums\AnimationPreset;
 use App\Enums\ContainerShape;
 use App\Enums\Material;
+use App\Enums\ProductClaim;
 use App\Enums\ProductStatus;
 use App\Enums\RenderMode;
+use App\Enums\SkinConcern;
+use App\Enums\SkinType;
 use App\Filament\Support\Translatable;
 use App\Models\ProductVariant;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -34,6 +38,11 @@ class ProductForm
 {
     public const string HEX_RULE = 'regex:/^#[0-9a-fA-F]{6}$/';
 
+    /** Two letters + digits, e.g. NA18230100123 (spaces are removed on save). */
+    public const string BPOM_RULE = 'regex:/^[A-Za-z]{2}\s?\d{9,14}$/';
+
+    public const string HALAL_RULE = 'regex:/^[A-Za-z0-9.\/\-\s]+$/';
+
     public const string BACKGROUND_RULE = 'regex:/^(#[0-9a-fA-F]{6}|(linear|radial)-gradient\([#0-9a-zA-Z%,.\s()-]+\))$/';
 
     /** Max upload sizes in KB (AGENTS.md sections 8 and 14). */
@@ -52,6 +61,7 @@ class ProductForm
                 ->columnSpanFull()
                 ->tabs([
                     self::infoTab(),
+                    self::detailsTab(),
                     self::photosTab(),
                     self::designTab(),
                     self::variantsTab(),
@@ -135,6 +145,106 @@ class ProductForm
                         ->inline(false),
                 ]),
             ]);
+    }
+
+    private static function detailsTab(): Tab
+    {
+        return Tab::make(__('admin.product.tabs_details'))
+            ->icon('heroicon-o-beaker')
+            ->schema([
+                Section::make(__('admin.product.regulatory_section'))
+                    ->description(__('admin.product.regulatory_help'))
+                    ->columns(3)
+                    ->schema([
+                        self::bpomInput('bpom_number')
+                            ->label(__('admin.product.bpom_number'))
+                            ->helperText(__('admin.product.bpom_number_help')),
+
+                        TextInput::make('halal_number')
+                            ->label(__('admin.product.halal_number'))
+                            ->helperText(__('admin.product.halal_number_help'))
+                            ->maxLength(60)
+                            ->rules([self::HALAL_RULE]),
+
+                        TextInput::make('net_content')
+                            ->label(__('admin.product.net_content'))
+                            ->helperText(__('admin.product.net_content_help'))
+                            ->maxLength(30),
+
+                        TextInput::make('marketplace_url')
+                            ->label(__('admin.product.marketplace_url'))
+                            ->helperText(__('admin.product.marketplace_url_help'))
+                            ->url()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make(__('admin.product.suitability_section'))
+                    ->description(__('admin.product.suitability_help'))
+                    ->schema([
+                        CheckboxList::make('skin_types')
+                            ->label(__('admin.product.skin_types'))
+                            ->options(SkinType::class)
+                            ->columns(['default' => 2, 'md' => 5]),
+
+                        CheckboxList::make('skin_concerns')
+                            ->label(__('admin.product.skin_concerns'))
+                            ->options(SkinConcern::class)
+                            ->columns(['default' => 2, 'md' => 4]),
+
+                        CheckboxList::make('claims')
+                            ->label(__('admin.product.claims'))
+                            ->helperText(__('admin.product.claims_help'))
+                            ->options(ProductClaim::class)
+                            ->columns(['default' => 2, 'md' => 4]),
+                    ]),
+
+                Repeater::make('key_ingredients')
+                    ->label(__('admin.product.key_ingredients'))
+                    ->helperText(__('admin.product.key_ingredients_help'))
+                    ->reorderable()
+                    ->collapsible()
+                    ->defaultItems(0)
+                    ->maxItems(8)
+                    ->addActionLabel(__('admin.product.add_key_ingredient'))
+                    ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('name')
+                            ->label(__('admin.product.key_ingredient_name'))
+                            ->required()
+                            ->maxLength(80)
+                            ->columnSpan(2),
+
+                        TextInput::make('concentration')
+                            ->label(__('admin.product.key_ingredient_concentration'))
+                            ->placeholder(__('admin.product.key_ingredient_concentration_placeholder'))
+                            ->maxLength(20),
+
+                        Translatable::make('benefit', __('admin.product.key_ingredient_benefit'), fn (string $path) => TextInput::make($path)
+                            ->maxLength(160)),
+                    ]),
+
+                Translatable::make('how_to_use', __('admin.product.how_to_use'), fn (string $path) => Textarea::make($path)
+                    ->rows(4)
+                    ->maxLength(1500)),
+
+                Translatable::make('warnings', __('admin.product.warnings'), fn (string $path) => Textarea::make($path)
+                    ->rows(2)
+                    ->maxLength(600)
+                    ->placeholder(__('admin.product.warnings_placeholder'))),
+            ]);
+    }
+
+    /** BPOM notification number, stored uppercase without spaces (e.g. NA18230100123). */
+    private static function bpomInput(string $name): TextInput
+    {
+        return TextInput::make($name)
+            ->maxLength(30)
+            ->rules([self::BPOM_RULE])
+            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state)
+                ? strtoupper((string) preg_replace('/\s+/', '', $state))
+                : null);
     }
 
     private static function photosTab(): Tab
@@ -285,6 +395,28 @@ class ProductForm
                             ->hex()
                             ->required()
                             ->rules([self::HEX_RULE]),
+
+                        TextInput::make('price')
+                            ->label(__('admin.product.variant_price'))
+                            ->helperText(__('admin.product.variant_price_help'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(1_000_000_000)
+                            ->prefix('Rp'),
+
+                        TextInput::make('net_content')
+                            ->label(__('admin.product.variant_net_content'))
+                            ->placeholder(__('admin.product.net_content_help'))
+                            ->maxLength(30),
+
+                        self::bpomInput('bpom_number')
+                            ->label(__('admin.product.variant_bpom'))
+                            ->helperText(__('admin.product.variant_bpom_help')),
+
+                        TextInput::make('marketplace_url')
+                            ->label(__('admin.product.variant_marketplace_url'))
+                            ->url()
+                            ->maxLength(255),
 
                         SpatieMediaLibraryFileUpload::make('label_texture')
                             ->label(__('admin.product.label_texture'))

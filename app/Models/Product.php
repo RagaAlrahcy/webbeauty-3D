@@ -7,8 +7,11 @@ namespace App\Models;
 use App\Enums\AnimationPreset;
 use App\Enums\ContainerShape;
 use App\Enums\Material;
+use App\Enums\ProductClaim;
 use App\Enums\ProductStatus;
 use App\Enums\RenderMode;
+use App\Enums\SkinConcern;
+use App\Enums\SkinType;
 use App\Observers\CatalogCacheObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -27,6 +30,8 @@ use Spatie\Translatable\HasTranslations;
 
 #[Fillable([
     'category_id', 'name', 'slug', 'short_description', 'description', 'price', 'ingredients',
+    'bpom_number', 'halal_number', 'net_content', 'skin_types', 'skin_concerns', 'claims',
+    'key_ingredients', 'how_to_use', 'warnings', 'marketplace_url',
     'render_mode', 'container_shape', 'base_color', 'material', 'animation_preset',
     'background_theme', 'camera_position', 'is_featured', 'status', 'published_at',
     'meta_title', 'meta_description',
@@ -41,9 +46,15 @@ class Product extends Model implements HasMedia
 
     public const string DEFAULT_COLOR = '#f2d4cf';
 
+    /** Public registration lookups, linked next to the BPOM and halal numbers. */
+    public const string BPOM_CHECK_URL = 'https://cekbpom.pom.go.id/';
+
+    public const string HALAL_CHECK_URL = 'https://bpjph.halal.go.id/';
+
     /** @var list<string> */
     public array $translatable = [
-        'name', 'short_description', 'description', 'ingredients', 'meta_title', 'meta_description',
+        'name', 'short_description', 'description', 'ingredients', 'how_to_use', 'warnings',
+        'meta_title', 'meta_description',
     ];
 
     protected function casts(): array
@@ -56,6 +67,10 @@ class Product extends Model implements HasMedia
             'animation_preset' => AnimationPreset::class,
             'status' => ProductStatus::class,
             'camera_position' => 'array',
+            'skin_types' => 'array',
+            'skin_concerns' => 'array',
+            'claims' => 'array',
+            'key_ingredients' => 'array',
             'is_featured' => 'boolean',
             'published_at' => 'datetime',
         ];
@@ -69,6 +84,119 @@ class Product extends Model implements HasMedia
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    public function faqs(): HasMany
+    {
+        return $this->hasMany(Faq::class)->where('is_published', true)->orderBy('sort_order');
+    }
+
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class)->where('is_published', true)->orderBy('sort_order');
+    }
+
+    /**
+     * @return list<SkinType>
+     */
+    public function skinTypeList(): array
+    {
+        return self::enumList($this->skin_types, SkinType::class);
+    }
+
+    /**
+     * @return list<SkinConcern>
+     */
+    public function skinConcernList(): array
+    {
+        return self::enumList($this->skin_concerns, SkinConcern::class);
+    }
+
+    /**
+     * @return list<ProductClaim>
+     */
+    public function claimList(): array
+    {
+        return self::enumList($this->claims, ProductClaim::class);
+    }
+
+    /**
+     * Key ingredients with the benefit text in the current locale.
+     *
+     * @return list<array{name: string, concentration: ?string, benefit: ?string}>
+     */
+    public function keyIngredientList(): array
+    {
+        $locale = app()->getLocale();
+
+        return collect((array) $this->key_ingredients)
+            ->filter(fn (mixed $item): bool => is_array($item) && filled($item['name'] ?? null))
+            ->map(function (array $item) use ($locale): array {
+                $benefit = (array) ($item['benefit'] ?? []);
+
+                return [
+                    'name' => (string) $item['name'],
+                    'concentration' => filled($item['concentration'] ?? null) ? (string) $item['concentration'] : null,
+                    'benefit' => ($benefit[$locale] ?? null) ?: ($benefit[config('app.fallback_locale')] ?? null),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Product price plus any variant price overrides.
+     *
+     * @return list<int>
+     */
+    public function prices(): array
+    {
+        return $this->variants
+            ->pluck('price')
+            ->push($this->price)
+            ->filter(fn (?int $price): bool => $price !== null)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    public function lowestPrice(): ?int
+    {
+        return $this->prices()[0] ?? null;
+    }
+
+    /** "Rp 99.000", or "Mulai Rp 99.000" when variants are priced differently. */
+    public function formattedPriceRange(): ?string
+    {
+        $prices = $this->prices();
+
+        if ($prices === []) {
+            return null;
+        }
+
+        $lowest = self::formatRupiah($prices[0]);
+
+        return count($prices) > 1 ? __('site.products.price_from', ['price' => $lowest]) : $lowest;
+    }
+
+    public static function formatRupiah(int $amount): string
+    {
+        return 'Rp '.number_format($amount, 0, ',', '.');
+    }
+
+    /**
+     * @template T of \BackedEnum
+     *
+     * @param  class-string<T>  $enum
+     * @return list<T>
+     */
+    private static function enumList(mixed $values, string $enum): array
+    {
+        return array_values(array_filter(array_map(
+            fn (mixed $value) => is_string($value) ? $enum::tryFrom($value) : null,
+            (array) $values,
+        )));
     }
 
     /** Products visible on the public site. */
@@ -198,6 +326,6 @@ class Product extends Model implements HasMedia
 
     public function formattedPrice(): ?string
     {
-        return $this->price === null ? null : 'Rp '.number_format($this->price, 0, ',', '.');
+        return $this->price === null ? null : self::formatRupiah($this->price);
     }
 }

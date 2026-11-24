@@ -124,6 +124,24 @@ class ManageSiteSettings extends SingletonSettingsPage
                         ->rows(2)
                         ->columnSpanFull(),
                 ]),
+
+            Section::make(__('admin.settings.tracking'))
+                ->description(__('admin.settings.tracking_help'))
+                ->columns(2)
+                ->collapsible()
+                ->schema([
+                    TextInput::make('ga4_measurement_id')
+                        ->label(__('admin.settings.ga4_measurement_id'))
+                        ->helperText(__('admin.settings.ga4_help'))
+                        ->placeholder('G-XXXXXXXXXX')
+                        ->maxLength(20)
+                        ->rules(['regex:'.SiteSetting::GA4_ID_PATTERN]),
+                    TextInput::make('meta_pixel_id')
+                        ->label(__('admin.settings.meta_pixel_id'))
+                        ->helperText(__('admin.settings.meta_pixel_help'))
+                        ->maxLength(20)
+                        ->rules(['regex:'.SiteSetting::META_PIXEL_ID_PATTERN]),
+                ]),
         ];
     }
 }

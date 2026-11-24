@@ -24,14 +24,15 @@ class SecurityHeaders
 
             // blob:/data: are required for textures and the Draco/KTX2 decoder workers.
             // Admin panel (Livewire/Alpine) needs 'unsafe-eval' and inline styles.
+            // Google Analytics 4 and Meta Pixel hosts are allowed for optional tracking.
             $response->headers->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://connect.facebook.net",
                 "worker-src 'self' blob:",
                 "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
                 "font-src 'self' data: https://fonts.bunny.net",
                 "img-src 'self' data: blob: https:",
-                "connect-src 'self' blob: data:",
+                "connect-src 'self' blob: data: https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net",
                 "frame-ancestors 'self'",
                 "base-uri 'self'",
                 "form-action 'self'",

@@ -30,6 +30,6 @@ class DatabaseSeeder extends Seeder
             'address' => 'Jakarta, Indonesia',
         ])->save();
 
-        $this->call(DemoProductSeeder::class);
+        $this->call([DemoProductSeeder::class, DemoContentSeeder::class]);
     }
 }

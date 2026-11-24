@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\PageKey;
+use App\Models\Page;
+use App\Models\Post;
 use App\Models\Product;
 use App\Services\Catalog;
 use App\Support\Locales;
@@ -17,13 +20,31 @@ class SitemapController extends Controller
     {
         $sitemap = Sitemap::create();
 
-        foreach (['home', 'products.index'] as $route) {
+        $routes = ['home', 'products.index', 'posts.index', 'where-to-buy', 'contact', 'reseller'];
+
+        if ($catalog->generalFaqs()->isNotEmpty()) {
+            $routes[] = 'faq';
+        }
+
+        foreach ($routes as $route) {
             $sitemap->add($this->localizedUrl($route));
         }
+
+        // Only pages created in the CMS exist; the reseller page works without one.
+        $catalog->pages()
+            ->reject(fn (Page $page): bool => $page->key === PageKey::Reseller)
+            ->each(function (Page $page) use ($sitemap): void {
+                $sitemap->add($this->localizedUrl($page->key->routeName())->setLastModificationDate($page->updated_at));
+            });
 
         $catalog->products()->each(function (Product $product) use ($sitemap): void {
             $sitemap->add($this->localizedUrl('products.show', ['slug' => $product->slug])
                 ->setLastModificationDate($product->updated_at));
+        });
+
+        $catalog->posts()->each(function (Post $post) use ($sitemap): void {
+            $sitemap->add($this->localizedUrl('posts.show', ['slug' => $post->slug])
+                ->setLastModificationDate($post->updated_at));
         });
 
         return $sitemap->toResponse(request());

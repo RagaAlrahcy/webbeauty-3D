@@ -6,24 +6,36 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Services\Catalog;
+use App\Support\ProductFilters;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class ProductController extends Controller
 {
     public function index(Request $request, Catalog $catalog): View
     {
-        $category = $request->string('category')->trim()->toString() ?: null;
         $categories = $catalog->categories();
+        $filters = ProductFilters::fromRequest($request, $categories->pluck('slug'));
 
-        if ($category !== null && ! $categories->contains('slug', $category)) {
-            $category = null;
-        }
+        $allProducts = $catalog->products();
+        $results = $filters->apply($allProducts);
+        $page = Paginator::resolveCurrentPage();
+
+        $products = new LengthAwarePaginator(
+            $results->forPage($page, ProductFilters::PER_PAGE)->values(),
+            $results->count(),
+            ProductFilters::PER_PAGE,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
 
         return view('pages.products.index', [
-            'products' => $catalog->products($category),
+            'products' => $products,
             'categories' => $categories,
-            'activeCategory' => $category,
+            'filters' => $filters,
+            'facets' => ProductFilters::facets($allProducts),
         ]);
     }
 

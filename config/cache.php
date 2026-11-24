@@ -2,14 +2,24 @@
 
 use App\Enums\AnimationPreset;
 use App\Enums\ContainerShape;
+use App\Enums\MarketplacePlatform;
 use App\Enums\Material;
+use App\Enums\PageKey;
 use App\Enums\ProductStatus;
+use App\Enums\PromotionPlacement;
 use App\Enums\RenderMode;
+use App\Enums\StoreType;
 use App\Models\Category;
+use App\Models\Faq;
 use App\Models\Homepage;
+use App\Models\OfficialStore;
+use App\Models\Page;
+use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Promotion;
 use App\Models\SiteSetting;
+use App\Models\Testimonial;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -152,11 +162,21 @@ return [
         Product::class,
         ProductVariant::class,
         SiteSetting::class,
+        Testimonial::class,
+        Faq::class,
+        Page::class,
+        OfficialStore::class,
+        Post::class,
+        Promotion::class,
         AnimationPreset::class,
         ContainerShape::class,
         Material::class,
         ProductStatus::class,
         RenderMode::class,
+        PageKey::class,
+        StoreType::class,
+        MarketplacePlatform::class,
+        PromotionPlacement::class,
         Illuminate\Database\Eloquent\Collection::class,
         Collection::class,
         Illuminate\Support\Carbon::class,

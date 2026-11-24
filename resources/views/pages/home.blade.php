@@ -61,6 +61,34 @@
         </section>
     @endif
 
+    {{-- Promo banners --}}
+    @if ($promotions->isNotEmpty())
+        <section class="container-page mt-16" aria-label="{{ __('site.home.promotions') }}">
+            <div @class(['grid gap-6', 'md:grid-cols-2' => $promotions->count() > 1])>
+                @foreach ($promotions as $promotion)
+                    @php($banner = $promotion->getFirstMedia('image'))
+                    <article class="relative isolate flex min-h-64 flex-col justify-end overflow-hidden rounded-[var(--radius-card)] bg-brand-soft p-8 sm:p-10">
+                        @if ($banner)
+                            <img src="{{ media_url($banner, 'banner') }}" alt="" class="absolute inset-0 -z-10 size-full object-cover" width="1600" height="800" loading="lazy" decoding="async">
+                            <div aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-t from-ink/70 via-ink/20 to-transparent"></div>
+                        @endif
+                        <div @class(['max-w-md', 'text-paper' => $banner])>
+                            <h2 @class(['heading-display text-4xl leading-tight', 'text-paper' => $banner])>{{ $promotion->title }}</h2>
+                            @if ($promotion->body)
+                                <p @class(['mt-3', 'text-paper/85' => $banner, 'text-ink-muted' => ! $banner])>{{ $promotion->body }}</p>
+                            @endif
+                            @if ($promotion->link_url)
+                                <a href="{{ $promotion->link_url }}" @class(['mt-6', 'btn-primary' => ! $banner, 'btn bg-paper text-ink hover:bg-brand-soft' => $banner])>
+                                    {{ $promotion->link_label ?: __('site.home.explore') }}
+                                </a>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     {{-- Featured --}}
     @if ($featured->isNotEmpty())
         <section class="container-page mt-20 sm:mt-28" aria-labelledby="featured-title">
@@ -76,6 +104,37 @@
             <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($featured as $product)
                     <x-product-card :product="$product" />
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    {{-- Testimonials --}}
+    @if ($testimonials->isNotEmpty())
+        <section class="container-page mt-20 sm:mt-28" aria-labelledby="testimonials-title">
+            <h2 id="testimonials-title" class="heading-display text-4xl sm:text-5xl">{{ __('site.home.testimonials') }}</h2>
+            <p class="mt-3 text-ink-muted">{{ __('site.home.testimonials_intro') }}</p>
+            <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                @foreach ($testimonials as $testimonial)
+                    <x-testimonial-card :testimonial="$testimonial" />
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    {{-- Articles --}}
+    @if ($posts->isNotEmpty())
+        <section class="container-page mt-20 sm:mt-28" aria-labelledby="articles-title">
+            <div class="flex flex-wrap items-end justify-between gap-6">
+                <div>
+                    <h2 id="articles-title" class="heading-display text-4xl sm:text-5xl">{{ __('site.home.articles') }}</h2>
+                    <p class="mt-3 text-ink-muted">{{ __('site.home.articles_intro') }}</p>
+                </div>
+                <a href="{{ localized_route('posts.index') }}" class="text-sm font-semibold text-brand underline-offset-4 hover:underline">{{ __('site.home.all_articles') }} →</a>
+            </div>
+            <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($posts as $post)
+                    <x-post-card :post="$post" />
                 @endforeach
             </div>
         </section>
