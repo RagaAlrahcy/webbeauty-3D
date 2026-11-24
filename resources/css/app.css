@@ -1,0 +1,190 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Design tokens. Brand colors (--brand, --brand-soft) are overridden at runtime
+ * from Site Settings in the CMS (see layouts/app.blade.php).
+ */
+:root {
+    --brand: #a35d6a;
+    --brand-soft: #f4e1dc;
+    --ink: #2a2124;
+    --ink-muted: #6b5d61;
+    --paper: #fbf7f4;
+    --paper-raised: #ffffff;
+    --line: #eadfdb;
+    --radius-card: 1.5rem;
+    --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+
+    --color-brand: var(--brand);
+    --color-brand-soft: var(--brand-soft);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-paper: var(--paper);
+    --color-paper-raised: var(--paper-raised);
+    --color-line: var(--line);
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+        background: var(--paper);
+        color: var(--ink);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 3px;
+        border-radius: 0.5rem;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html {
+            scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+@utility container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+}
+
+@utility eyebrow {
+    @apply text-xs font-semibold tracking-[0.22em] text-brand uppercase;
+}
+
+@utility heading-display {
+    @apply font-display font-medium tracking-tight text-ink;
+}
+
+@utility btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-300;
+}
+
+@utility btn-primary {
+    @apply btn bg-ink text-paper hover:bg-brand;
+}
+
+@utility btn-ghost {
+    @apply btn border border-line bg-paper-raised/70 text-ink backdrop-blur hover:border-brand hover:text-brand;
+}
+
+@layer components {
+    .prose-soft {
+        @apply max-w-none leading-relaxed text-ink-muted;
+    }
+
+    .prose-soft :where(h2, h3) {
+        @apply mt-6 mb-2 font-display text-2xl text-ink;
+    }
+
+    .prose-soft :where(p, ul, ol) {
+        @apply mb-4;
+    }
+
+    .prose-soft :where(ul) {
+        @apply list-disc pl-5;
+    }
+
+    .prose-soft :where(ol) {
+        @apply list-decimal pl-5;
+    }
+
+    .prose-soft :where(a) {
+        @apply text-brand underline underline-offset-4;
+    }
+}
+
+/* ---------- 3D viewer ---------- */
+
+.product-viewer {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--viewer-bg, radial-gradient(120% 90% at 50% 20%, #fff 0%, var(--brand-soft) 100%));
+}
+
+.product-viewer canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.8s var(--ease-soft);
+    /* Allow vertical page scroll on touch; horizontal drags rotate the model. */
+    touch-action: pan-y;
+    cursor: grab;
+}
+
+.product-viewer canvas:active {
+    cursor: grabbing;
+}
+
+.product-viewer.is-ready canvas {
+    opacity: 1;
+}
+
+.product-viewer .viewer-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6%;
+    transition: opacity 0.6s var(--ease-soft);
+}
+
+.product-viewer.is-ready .viewer-fallback {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.product-viewer .viewer-controls,
+.product-viewer .viewer-hint {
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-soft);
+}
+
+.product-viewer.is-ready .viewer-controls,
+.product-viewer.is-ready .viewer-hint {
+    opacity: 1;
+}
+
+.viewer-loading {
+    position: absolute;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%);
+}
+
+.product-viewer.is-ready .viewer-loading,
+.product-viewer.is-static .viewer-loading,
+.product-viewer.is-static .viewer-controls,
+.product-viewer.is-static .viewer-hint {
+    display: none;
+}
