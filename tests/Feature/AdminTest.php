@@ -7,6 +7,7 @@ use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -111,6 +112,31 @@ it('rejects a non-hex base color', function () {
         ])
         ->call('create')
         ->assertHasFormErrors(['base_color']);
+});
+
+it('uses the bundled favicon until one is uploaded in site settings', function () {
+    $this->get('/')->assertSee(asset('favicon.svg'), false);
+
+    $this->actingAs(admin());
+
+    Livewire::test(ManageSiteSettings::class)
+        ->fillForm([
+            'brand_name' => 'Brand Uji',
+            'primary_color' => '#123456',
+            'accent_color' => '#abcdef',
+            'favicon' => [UploadedFile::fake()->image('icon.png', 256, 256)],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $favicon = SiteSetting::current()->getFirstMedia('favicon');
+
+    expect($favicon->hasGeneratedConversion('icon'))->toBeTrue();
+
+    $this->get('/')
+        ->assertSee($favicon->getUrl('icon'), false)
+        ->assertDontSee(asset('favicon.svg'), false);
+    $this->get('/admin')->assertSee($favicon->getUrl('icon'), false);
 });
 
 it('saves site settings and homepage', function () {

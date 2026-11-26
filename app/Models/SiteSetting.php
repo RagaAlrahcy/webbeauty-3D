@@ -7,8 +7,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 #[Fillable([
@@ -50,6 +52,29 @@ class SiteSetting extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('logo')->singleFile();
+
+        $this->addMediaCollection('favicon')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/png', 'image/jpeg', 'image/webp']);
+    }
+
+    /**
+     * The favicon is tiny, so it is converted right away instead of waiting
+     * for the queue worker; the tab icon never shows a half-processed upload.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('icon')
+            ->fit(Fit::Crop, 192, 192)
+            ->format('png')
+            ->performOnCollections('favicon')
+            ->nonQueued();
+    }
+
+    /** Uploaded favicon (192px PNG), or null to fall back to the bundled default icon. */
+    public function faviconUrl(): ?string
+    {
+        return media_url($this->getFirstMedia('favicon'), 'icon');
     }
 
     public function whatsappUrl(?string $message = null): ?string

@@ -8,6 +8,7 @@
     $metaDescription = str($description ?? $site->tagline ?? '')->limit(160)->toString();
     $canonical = url()->current();
     $logo = $site->getFirstMedia('logo');
+    $favicon = $site->faviconUrl();
     $hex = '/^#[0-9a-fA-F]{6}$/';
     $brandColor = preg_match($hex, (string) $site->primary_color) ? $site->primary_color : '#a35d6a';
     $accentColor = preg_match($hex, (string) $site->accent_color) ? $site->accent_color : '#f4e1dc';
@@ -67,6 +68,15 @@
     @endif
 
     <meta name="theme-color" content="{{ $accentColor }}">
+
+    @if ($favicon)
+        <link rel="icon" href="{{ $favicon }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ $favicon }}">
+    @else
+        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    @endif
 
     @stack('head')
 

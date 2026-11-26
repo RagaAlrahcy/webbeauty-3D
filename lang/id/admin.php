@@ -432,6 +432,8 @@ return [
         'brand' => 'Brand',
         'brand_name' => 'Nama brand',
         'logo' => 'Logo',
+        'favicon' => 'Favicon (ikon di tab browser)',
+        'favicon_help' => 'Gambar persegi PNG, JPG atau WebP, minimal 192×192 px. Kosongkan untuk memakai ikon bawaan.',
         'tagline' => 'Tagline',
         'primary_color' => 'Warna utama',
         'primary_color_help' => 'Dipakai untuk tombol dan aksen. Pilih warna yang cukup gelap agar teks putih terbaca.',

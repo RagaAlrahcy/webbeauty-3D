@@ -432,6 +432,8 @@ return [
         'brand' => 'Brand',
         'brand_name' => 'Brand name',
         'logo' => 'Logo',
+        'favicon' => 'Favicon (browser tab icon)',
+        'favicon_help' => 'Square PNG, JPG or WebP image, at least 192×192 px. Leave empty to use the default icon.',
         'tagline' => 'Tagline',
         'primary_color' => 'Primary color',
         'primary_color_help' => 'Used for buttons and accents. Pick a color dark enough for white text.',

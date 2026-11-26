@@ -74,6 +74,14 @@ class ManageSiteSettings extends SingletonSettingsPage
                         ->acceptedFileTypes(['image/png', 'image/webp', 'image/svg+xml'])
                         ->maxSize(1024),
 
+                    SpatieMediaLibraryFileUpload::make('favicon')
+                        ->label(__('admin.settings.favicon'))
+                        ->helperText(__('admin.settings.favicon_help'))
+                        ->collection('favicon')
+                        ->image()
+                        ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                        ->maxSize(1024),
+
                     Translatable::make('tagline', __('admin.settings.tagline'), fn (string $path) => TextInput::make($path)
                         ->maxLength(120)),
 

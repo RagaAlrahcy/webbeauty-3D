@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\SiteSetting;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -26,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('Beauty CMS')
+            ->favicon(fn (): string => SiteSetting::current()->faviconUrl() ?? asset('favicon.svg'))
             ->colors([
                 'primary' => Color::Rose,
                 'gray' => Color::Stone,
