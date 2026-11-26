@@ -154,6 +154,7 @@ Atas permintaan pemilik proyek, sampai Windows direstart dan Docker/WSL2 siap, p
 - PHP 8.4 portable: `D:\tools\php84\php.exe` (+ `D:\tools\composer.phar`). **Bukan** PHP 7.4 XAMPP.
 - MySQL 8.4 portable: `D:\tools\mysql84`, data `D:\tools\mysql84-data`, **port 3307**, user `beauty`/`password`, database `beauty_cms` dan `beauty_cms_testing`. Port 3306 dipakai MariaDB XAMPP milik proyek lain; jangan diubah.
 - Jalankan semua (MySQL, `artisan serve` di `http://127.0.0.1:8000`, queue worker): `D:\projects\beauty-cms\start-dev.cmd`.
+- Matikan semua dengan aman: `D:\projects\beauty-cms\stop-dev.cmd` (queue worker dihentikan setelah job berjalan selesai, MySQL di-shutdown lewat `mysqladmin` (user `root` lokal tanpa password, hanya `127.0.0.1`), MySQL/PHP XAMPP tidak disentuh).
 - Pengganti perintah `sail ...` di mode ini: `D:\tools\php84\php.exe artisan ...`, `D:\tools\php84\php.exe D:\tools\composer.phar ...`, `npm ...`.
 - Setelah Docker siap: pindahkan proyek ke Sail (bagian 4.1–4.3), lalu hapus bagian ini.
 
